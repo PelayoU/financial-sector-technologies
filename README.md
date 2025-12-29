@@ -19,8 +19,8 @@ This repository serves as a portfolio for **FinTech Infrastructure** and **Capit
 
 ## 👤 Author
 **Pelayo Urzaiz**
+* **BSc in Applied Statistics** – Universidad Complutense de Madrid (UCM)
 * **MSc in Financial Technologies (FinTech)** – Universidad Carlos III de Madrid (UC3M)
-* **MSc in Quantitative Finance** – [Nombre de la institución si es distinta]
-* **BSc in Applied Statistics** – [Nombre de la institución]
+* **MSc in Quantitative Finance** – Universidad Nacional de Educación a Distancia (UNED)
 
 [LinkedIn Profile](PON_AQUI_TU_LINK_DE_LINKEDIN)
