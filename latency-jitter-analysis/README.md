@@ -13,6 +13,42 @@ In high-frequency trading and real-time systems, averages are misleading. This p
 
 ---
 
+## ⚙️ Architecture & Methodology
+To ensure benchmark accuracy and avoid the "Coordinated Omission" problem, the simulation engine relies on two distinct strategies for load generation and measurement.
+
+### 1. Nanosecond-Precision Jitter Simulation (`PracticeLatency1`)
+Standard `Thread.sleep()` in Java relies on the OS scheduler, which introduces unpredictable noise (jitter) incompatible with nanosecond-level benchmarking.
+* **Strategy:** We implemented a **Busy-Wait Simulator** (`SyncOpSimulRndPark`).
+* **Mechanism:** Instead of yielding the CPU, the thread performs a spin-loop until the target time is reached. This simulates pure CPU-bound work and allows for precise Uniform Distribution generation.
+
+```java
+// Simulating pure CPU work without OS Scheduler interference
+long startTime = System.nanoTime();
+while(System.nanoTime() - startTime < newParkTime);
+```
+
+### 2. Modeling Resource Contention (PracticeLatency2)
+To simulate a real-world bottleneck (e.g., a database connection pool or a locked critical section), we used a Shared Monitor Pattern.
+
+The Bottleneck: A single SyncOpSimulSleep instance is shared across all worker threads.
+
+The Lock: The executeOp() method is marked as synchronized. This forces serial execution, turning a parallel workload into a sequential queue effectively.
+
+```java
+// Forcing thread contention via Monitor Lock
+public synchronized void executeOp() {
+    try { Thread.sleep(sleepTime); } 
+    catch (InterruptedException e) { ... }
+}
+````
+
+### 3. Measuring "Accumulated Latency"
+In high-concurrency scenarios, measuring how long a task takes (Service Time) is insufficient. We calculate Response Time by tracking the drift between the expected start time and the actual execution time.
+
+Formula: Accumulated Latency = Service Latency + (ActualStartTime - ExpectedStartTime)
+
+---
+
 ## 📊 Module 1: Synchronous Latency Baselines
 **Objective:** Establish a baseline for operation costs using `HdrHistogram` to capture nanosecond-precision timing without the "Coordinated Omission" problem.
 
@@ -26,16 +62,12 @@ In high-frequency trading and real-time systems, averages are misleading. This p
 <br>
 
 ![Distribution Histogram](attachments/image.png)
-
-![alt text](attachments/image-1.png)
-
 <br>
-
-![Theoretical Graph](attachments/image_fb5aa8.png)
-
+![Uniform Graph](attachments/image-1.png)
+<br>
 *(Theoretical vs Real-world distribution analysis)*
 <br>
-![alt text](attachments/image-2.png)
+![Formulas](attachments/image-2.png)
 
 ---
 
@@ -44,46 +76,42 @@ In high-frequency trading and real-time systems, averages are misleading. This p
 
 ### Scenarios Analyzed
 
-#### A. Healthy State (1 Thread, 50 ops/s)
+### A. Healthy State (1 Thread, 50 ops/s)
 System is operating within capacity ($\lambda < \mu$).
 * **Result:** Zero queue accumulation. Service time equals Response time.
 
 <br>
 
-![Baseline Latency](attachments/image_fb5aad.png)
+![Baseline Latency](attachments/image-3.png)
 
 <br>
 
-![alt text](attachments/image-3.png)
-
-<br>
 ---
+
 <br>
 
-#### B. The "Death Spiral" (Saturation)
+### B. The "Death Spiral" (Saturation)
 When request rate exceeds service rate (Simulating 500 ops/s on a 10ms task).
 * **Impact:** While *processing time* remains stable (~12ms), the **Queue Time** explodes.
 * **Metric:** Latency Accumulation grows linearly with time, rendering the system unresponsive.
 
 <br>
 
-![Saturation Graph](attachments/image_fb5ac6.png)
-
-<br>
-
 **Service Latencies (Stable):**
 <br>
-![alt text](attachments/image-4.png)
+![Service Latency](attachments/image-4.png)
 
 **Accumulated Latencies (Queue Explosion):**
 <br>
-![alt text](attachments/image-5.png)
+![Accumulated Latency](attachments/image-5.png)
 
 <br>
+
 ---
+
 <br>
 
-#### C. Multi-Threaded Contention (Context Switching)
+### C. Multi-Threaded Contention (Context Switching)
 Scaling to multiple threads sharing a synchronized resource to analyze lock contention overhead.
 
 **1. Scenario: 2 Threads**
@@ -91,42 +119,42 @@ Scaling to multiple threads sharing a synchronized resource to analyze lock cont
 
 <br>
 
-![](attachments/image-10.png)
+![2 Threads Table](attachments/image-10.png)
 <br>
-![alt text](attachments/image-11.png)
+![2 Threads Graph](attachments/image-11.png)
 
-> **Analysis:** The mean latency is already **22.83ms**, which is greater than the arrival interval of **20ms**. Therefore, accumulated latencies are mathematically bound to increase.
+> **Analysis:** The mean latency (**22.83ms**) already exceeds the arrival interval (**20ms**). Therefore, the system is mathematically unstable, and accumulated latencies are bound to increase.
 
 <br>
 
-![alt text](attachments/image-12.png)
+![Accumulated Table](attachments/image-12.png)
 <br>
-![alt text](attachments/image-13.png)
+![Accumulated Graph](attachments/image-13.png)
 
 > **Result:** Mean accumulated latency reached **283ms**.
 
 <br>
 
 **2. Scenario: 4 Threads**
-Moving directly to 4 Threads.
+Scaling directly to 4 Threads.
 `MAX_EXPECTED_EXECUTIONS_PER_SECOND = 50`
 
 <br>
 
-![alt text](attachments/image-14.png)
+![4 Threads Table](attachments/image-14.png)
 
-> **Analysis:** Compared to the 2-thread scenario, the mean has risen considerably. Likewise, the P90 value and the accumulated variance have increased disproportionately.
+> **Analysis:** Compared to the 2-thread scenario, the mean has risen considerably. Likewise, the P90 value and the accumulated variance have spiked disproportionately.
 
 <br>
 
-![alt text](attachments/image-15.png)
+![4 Threads Graph](attachments/image-15.png)
 <br>
-![alt text](attachments/image-16.png)
+![4 Threads Stats](attachments/image-16.png)
 
 > **Critical Conclusion:**
 > * Mean Accumulated Latency: **1380.20ms**.
 > * As observed, mean service latencies increased by less than 2x (due to lock overhead), but **accumulated latencies nearly tripled** compared to the 2-thread scenario.
-> * **Takeaway:** To keep accumulated latencies low in this 4-thread configuration, `MAX_EXPECTED_EXECUTIONS_PER_SECOND` would need to be set significantly lower than 50 to account for coordination overhead.
+> * **Takeaway:** To keep accumulated latencies low in this 4-thread configuration, `MAX_EXPECTED_EXECUTIONS_PER_SECOND` must be significantly reduced below 50 to account for coordination overhead.
 
 ---
 
