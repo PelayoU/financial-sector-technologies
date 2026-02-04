@@ -6,6 +6,7 @@ This repository serves as a portfolio for **FinTech Infrastructure** and **Capit
 
 | Project | Tech Stack | Description |
 | :--- | :--- | :--- |
+| **[Latency & Jitter Analysis](./latency-jitter-analysis)** | `Java` `HdrHistogram` | High-performance benchmarking of **Service Time** vs. **Response Time**. Analyzes tail latencies (P99) and solves the "Coordinated Omission" problem in trading simulations. |
 | **[Secure Microservice (Spring Boot)](./spring-boot-basic-auth-lab)** | `Java` `Spring Boot` `Security` | REST API implementation ensuring data integrity with **Basic Auth** and real-time monitoring via **Actuator**. Mimics a secure market data endpoint. |
 | *Upcoming: FIX Protocol Client* | `Java` `QuickFIX/J` | Simulation of an institutional trading client for order routing. |
 | *Upcoming: Market Data Feed* | `Kafka` `Docker` | Real-time price dissemination system using event-driven architecture. |
