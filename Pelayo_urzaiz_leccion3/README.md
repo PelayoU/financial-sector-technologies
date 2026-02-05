@@ -17,13 +17,63 @@ GitHub renders images inline, so this repository doubles as a **scrollable slide
 
 To get a slide-style experience, embed any of the exported pages from the report:
 
-```markdown
-![Aeron latency testbed overview](screenshots/img-001-000.png)
-![Unicast vs Multicast vs IPC – sample latency distribution](screenshots/img-003-006.png)
-![Extreme load behaviour – message loss vs integrity](screenshots/img-004-009.png)
-```
+
+
+| Subscriber Node (Consumer) | Publisher Node (Producer) |
+| :--- | :--- |
+| ![Subscriber](screenshots/img-002-004.png) | ![Publisher](screenshots/img-002-005.png) |
+| *Receiving messages from stream 1001* | *Broadcasting 'Hello World!' to localhost:40123* |
+
+<br>
+
+| Sample latency distribution |
+| :--- |
+![Sample latency distribution](screenshots/img-011-033.png)
+
 
 You can navigate through the `screenshots/` folder to select the most representative pages you want to showcase on GitHub.
+
+### 📊 Baseline Performance (Battery 1)
+*20,000 messages @ 1,000 msgs/s. Represents the system's baseline latency.*
+
+| Canal | Tipo | Mean (ms) | Deviation | Max (ms) | Total count | Ratio (msg/s) | Mensajes |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Unicast** | Latency | 0.05 | 0.82 | 29 | 20000 | 1000 | 20000 |
+| **Unicast** | Accumulated latency | 0.05 | 0.84 | 29.00 | 20000 | 1000 | 20000 |
+| **Multicast** | Latency | 0.13 | 1.40 | 37.00 | 20000 | 1000 | 20000 |
+| **Multicast** | Accumulated latency | 0.14 | 1.49 | 37.00 | 20000 | 1000 | 20000 |
+| **IPC** | Latency | 0.02 | 0.40 | 19.00 | 20000 | 1000 | 20000 |
+| **IPC** | Accumulated latency | 0.02 | 0.40 | 19.00 | 20000 | 1000 | 20000 |
+
+### 🚀 High-Throughput Analysis (Battery 2)
+*20,000 messages @ 50,000 msgs/s. Observing queue pressure and jitter.*
+
+| Canal | Tipo | Mean (ms) | Deviation | Max (ms) | Total count | Ratio (msg/s) | Mensajes |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Unicast** | Latency | 424.00 | 195.18 | 739.00 | 20000 | 50000 | 20000 |
+| **Unicast** | Accumulated latency | 548.37 | 243.79 | 923.00 | 20000 | 50000 | 20000 |
+| **Multicast** | Latency | 498.63 | 155.22 | 679.00 | 20000 | 50000 | 20000 |
+| **Multicast** | Accumulated latency | 603.23 | 204.55 | 871.00 | 20000 | 50000 | 20000 |
+| **IPC** | Latency | 296.15 | 149.64 | 571.00 | 20000 | 50000 | 20000 |
+| **IPC** | Accumulated latency | 358.89 | 174.50 | 675.00 | 20000 | 50000 | 20000 |
+
+### ⚖️ Stress Test & Reliability (Battery 3)
+*200,000 messages @ 100,000 msgs/s. Comparative of data integrity under extreme load.*
+
+| Canal | Tipo | Mean (ms) | Deviation | Max (ms) | Total count | Ratio (msg/s) | Mensajes |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Unicast** | Latency | 1977.46 | 924.82 | 3503.00 | 144770 | 100000 | 200000 |
+| **Unicast** | Accumulated latency | 2322.08 | 1078.59 | 4159.00 | 144770 | 100000 | 200000 |
+| **MULTICAST** | Latency | 1853.42 | 923.13 | 3423.00 | 143490 | 100000 | 200000 |
+| **MULTICAST** | Accumulated latency | 2162.86 | 1047.79 | 3983.00 | 143490 | 100000 | 200000 |
+| **IPC** | Latency | 2248.88 | 1208.08 | 4319.00 | 200000 | 100000 | 200000 |
+| **IPC** | Accumulated latency | 2593.97 | 1363.24 | 4895.00 | 200000 | 100000 | 200000 |
+
+
+
+# Technical Note on Performance Degradation
+- The increase in mean latency under extreme load (100k msgs/s) is driven by OS/runtime noise (context switches, cache effects, timer resolution) and network buffer saturation. Simple latency rises as the system spends more time managing queues and scheduling, while accumulated latency grows even faster due to queueing and head-of-line blocking.
+
 
 ---
 
@@ -283,24 +333,5 @@ In trading environments, we choose the configuration where **no prices are dropp
 
 ---
 
-## What a Recruiter Should Notice
 
-- **Domain relevance (Fintech / Low-Latency)**  
-  - The project mirrors concerns of **electronic trading**, **market data distribution**, and **order routing**:
-    - Latency vs throughput.
-    - Back-pressure and queueing.
-    - Message loss vs integrity.
-
-- **System-level thinking**  
-  - Clear understanding of how to:
-    - Configure drivers for **low latency vs resource efficiency**.
-    - Use **polling, idle strategies, and non-blocking APIs**.
-    - Instrument flows with **timestamps and histograms**.
-
-- **Experimental rigor**  
-  - Structured benchmark design (three batteries, multiple transports).
-  - Focus on **percentiles and accumulated latency**, not just raw averages.
-  - Correct interpretation of counterintuitive results (e.g., IPC “worse” average latency when it is the **only lossless** option).
-
-For a role involving **low-latency Java**, **trading infrastructure**, or **performance engineering**, this project demonstrates both **hands-on implementation** and the **analytical mindset** required to design, measure, and reason about real-world systems.
 
