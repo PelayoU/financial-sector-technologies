@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package es.uc3m.fintech.lesson9.proto;
+
+option java_package = "es.uc3m.fintech.lesson9.proto";
+option java_outer_classname = "Lesson9";
+
+message Instrument {
+  int32 instrument_id = 1;
+  string symbol       = 2;
+}
+
+message ReferenceData {
+  int32 market_id              = 1;
+  string algorithm_identifier  = 2;
+  repeated Instrument instrument = 3;
+}

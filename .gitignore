@@ -1,0 +1,24 @@
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Claude Code working dir
+.claude/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Java / Maven build artefacts
+target/
+**/target/
+*.class
+
+# Logs
+*.log
+**/logs/
+
+# OS / temp
+*.swp
+*~

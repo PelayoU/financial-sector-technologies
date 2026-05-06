@@ -1,0 +1,12 @@
+target/
+.idea/
+*.iml
+.DS_Store
+
+# QuickFIX/J runtime artefacts (generated under logs/ when running locally)
+logs/*.body
+logs/*.event.log
+logs/*.header
+logs/*.senderseqnums
+logs/*.targetseqnums
+logs/*.session
